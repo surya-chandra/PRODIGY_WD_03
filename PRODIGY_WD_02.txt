@@ -1,0 +1,117 @@
+STOP WATCH:
+-------------
+
+HTML:
+-------
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Stopwatch</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <h1>Stopwatch</h1>
+    <div id="stopwatch-display">00:00:00</div>
+    <button id="start-button" onclick="startStopwatch()">Start</button>
+    <button id="pause-button" onclick="pauseStopwatch()">Pause</button>
+    <button id="reset-button" onclick="resetStopwatch()">Reset</button>
+    <button id="lap-button" onclick="recordLapTime()">Lap</button>
+    <ul id="lap-times"></ul>
+    <script src="script.js"></script>
+</body>
+
+</html>
+
+
+
+CS:
+----
+
+
+@import url('https://fonts.googleapis.com/css2?family=Bree+Serif&family=Caveat:wght@400;700&family=Lobster&family=Monoton&family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Playfair+Display+SC:ital,wght@0,400;0,700;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,700&family=Roboto:ital,wght@0,400;0,700;1,400;1,700&family=Source+Sans+Pro:ital,wght@0,400;0,700;1,700&family=Work+Sans:ital,wght@0,400;0,700;1,700&display=swap');
+
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+#stopwatch-display {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+button {
+    width: 100px;
+    height: 30px;
+    font-size: 16px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4CAF50;
+    color: #fff;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #3e8e41;
+}
+
+#lap-times {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#lap-times li {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+
+
+
+JAVASCRIPT:
+-----------------
+
+
+
+    let startTime = 0;
+    let currentTime = 0;
+    let lapTimes = [];
+    
+    function startStopwatch() {
+        startTime = new Date().getTime();
+        setInterval(() => {
+            currentTime = new Date().getTime() - startTime;
+            document.getElementById("stopwatch-display").innerHTML = formatTime(currentTime);
+        }, 1000);
+    }
+    
+    function pauseStopwatch() {
+        clearInterval();
+    }
+    
+    function resetStopwatch() {
+        startTime = 0;
+        currentTime = 0;
+        lapTimes = [];
+        document.getElementById("stopwatch-display").innerHTML = "00:00:00";
+        document.getElementById("lap-times").innerHTML = "";
+    }
+    
+    function recordLapTime() {
+        const lapTime = currentTime;
+        lapTimes.push(lapTime);
+        document.getElementById("lap-times").innerHTML += `<li>Lap ${lapTimes.length}: ${formatTime(lapTime)}</li>`;
+    }
+    
+    function formatTime(time) {
+        const hours = Math.floor(time / 3600000);
+        const minutes = Math.floor((time % 3600000) / 60000);
+        const seconds = Math.floor((time % 60000) / 1000);
+        return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    }
