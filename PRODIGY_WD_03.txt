@@ -1,0 +1,171 @@
+TIC TAC TOE GAME
+------------------
+
+HTML:
+------
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tic Tac Toe</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-image">
+  <h1>Tic Tac Toe</h1>
+  <div class="game-board">
+    <div class="square" id="square-0"></div>
+    <div class="square" id="square-1"></div>
+    <div class="square" id="square-2"></div>
+    <div class="square" id="square-3"></div>
+    <div class="square" id="square-4"></div>
+    <div class="square" id="square-5"></div>
+    <div class="square" id="square-6"></div>
+    <div class="square" id="square-7"></div>
+    <div class="square" id="square-8"></div>
+  </div>
+  <div class="game-info">
+    <p id="turn">Turn: X</p>
+    <p id="result"></p>
+  </div>
+  <button id="reset-button">Reset Game</button>
+
+  <script src="script.js"></script>
+  </div>
+</body>
+</html>
+
+
+
+
+CSS:
+------
+
+
+
+
+.bg-image{
+    background-image: url("https://www.reddit.com/r/godot/comments/kjuyqg/sudo_tic_tac_toe_mind_game_is_on_playstore_link/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button");
+}
+
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 10px;
+  width: 300px;
+  margin: 40px auto;
+}
+
+.square {
+  background-color: #f0f0f0;
+  padding: 20px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.square:hover {
+  background-color: #e0e0e0;
+}
+
+.game-info {
+  margin-top: 20px;
+}
+
+#turn {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+#result {
+  font-size: 24px;
+  font-weight: bold;
+  color: #008000;
+}
+
+#reset-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background-color: #4CAF50;
+  color: #fff;
+  cursor: pointer;
+}
+
+#reset-button:hover {
+  background-color: #3e8e41;
+}
+
+
+
+
+JAVASCRIPT:
+------------
+
+
+let currentPlayer = 'X';
+let gameOver = false;
+let squares = document.querySelectorAll('.square');
+let turnElement = document.getElementById('turn');
+let resultElement = document.getElementById('result');
+let resetButton = document.getElementById('reset-button');
+
+// Function to handle user clicks
+function handleClick(event) {
+  let square = event.target;
+  if (square.textContent === '' && !gameOver) {
+    square.textContent = currentPlayer;
+    checkForWin();
+    switchPlayer();
+  }
+}
+
+// Function to check for winning conditions
+function checkForWin() {
+  let winningCombinations = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+  ];
+  for (let i = 0; i < winningCombinations.length; i++) {
+    let combination = winningCombinations[i];
+    if (squares[combination[0]].textContent === squares[combination[1]].textContent &&
+        squares[combination[1]].textContent === squares[combination[2]].textContent &&
+        squares[combination[0]].textContent !== '') {
+      gameOver = true;
+      resultElement.textContent = `Player ${currentPlayer} wins!`;
+    }
+  }
+}
+
+// Function to switch players
+function switchPlayer() {
+  currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
+  turnElement.textContent = `Turn: ${currentPlayer}`;
+}
+
+// Add event listeners to the game board
+squares.forEach(square => {
+  square.addEventListener('click', handleClick);
+});
+
+// Add event listener to the reset button
+resetButton.addEventListener('click', () => {
+  currentPlayer = 'X';
+  gameOver = false;
+  turnElement.textContent = `Turn: ${currentPlayer}`;
+  resultElement.textContent = '';
+  squares.forEach(square => {
+    square.textContent = '';
+  });
+});
