@@ -1,0 +1,286 @@
+
+TASK-1:
+------------
+
+
+SECURE USER AUTHENTICATION:
+------------------------------
+
+
+Implementing a secure user authentication system involves several components, including secure password storage, session management, and access control. Below is a guide to building a basic user authentication system using Node.js with Express for the backend and a simple frontend. This example uses bcrypt for password hashing and JSON Web Tokens (JWT) for session management.
+
+
+FOR IMPLEMENTING A SECURE USER AUTHENTICATIONS WE NEED:
+---------------------------------------------------------
+
+1) Node.js and npm installed
+2) Basic knowledge of JavaScript, Node.js, and Express
+
+
+Step-by-Step Implementation:
+-----------------------------
+
+
+1. Set Up Your Project:
+------------------------
+Create a new directory for your project and initialize it with npm.
+
+mkdir auth-system
+cd auth-system
+npm init -y
+
+2. Install Required Packages:
+-------------------------------
+Install the necessary packages for this project:
+
+
+npm install express mongoose bcryptjs jsonwebtoken dotenv cors
+npm install --save-dev nodemon
+
+
+-> express: Web framework for Node.js
+-> mongoose: MongoDB object modeling
+-> bcryptjs: Password hashing
+-> jsonwebtoken: JWT for authentication
+-> dotenv: Environment variable management
+-> cors: Cross-Origin Resource Sharing for API access
+-> nodemon: Development server for auto-reloading
+
+
+3. Create Project Structure:
+------------------------------
+Create the following file structure:
+
+
+Arduino:
+----------
+
+
+auth-system/
+│
+├── config/
+│   └── db.js
+│
+├── models/
+│   └── User.js
+│
+├── routes/
+│   ├── auth.js
+│   └── protected.js
+│
+├── .env
+├── server.js
+└── package.json
+
+
+4. Set Up Environment Variables:
+---------------------------------
+Create a .env file to store sensitive information.
+
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+
+
+Replace your_mongodb_connection_string and your_jwt_secret with your actual MongoDB connection string and a secret key for JWT, respectively.
+
+
+
+5. Configure Database Connection:
+-----------------------------------
+In config/db.js, set up the connection to MongoDB.
+
+
+JavaScript:
+------------
+
+const mongoose = require('mongoose');
+require('dotenv').config();
+
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log('MongoDB connected');
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+        process.exit(1);
+    }
+};
+
+module.exports = connectDB;
+
+
+
+
+6. Define the User Model:
+----------------------------
+
+Create a User model in models/User.js.
+
+
+JavaScript:
+-------------
+
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+const UserSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+});
+
+// Hash password before saving user
+UserSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) return next();
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
+
+// Compare hashed passwords
+UserSchema.methods.comparePassword = function (password) {
+    return bcrypt.compare(password, this.password);
+};
+
+module.exports = mongoose.model('User', UserSchema);
+
+
+
+
+7. Implement Authentication Routes:
+-------------------------------------
+Create authentication routes in routes/auth.js.
+
+
+
+JavaScript:
+-------------
+
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+require('dotenv').config();
+
+const router = express.Router();
+
+// User Registration
+router.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const user = new User({ username, password });
+        await user.save();
+        res.status(201).json({ message: 'User registered' });
+    } catch (error) {
+        res.status(400).json({ error: 'Error registering user' });
+    }
+});
+
+// User Login
+router.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const user = await User.findOne({ username });
+        if (!user || !(await user.comparePassword(password))) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: '1h',
+        });
+
+        res.json({ token });
+    } catch (error) {
+        res.status(500).json({ error: 'Error logging in' });
+    }
+});
+
+module.exports = router;
+
+
+
+8. Create Protected Routes:
+------------------------------
+Create protected routes in routes/protected.js.
+
+
+JavaScript:
+-------------
+
+
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+require('dotenv').config();
+
+const router = express.Router();
+
+// Middleware to check JWT
+const authMiddleware = (req, res, next) => {
+    const token = req.headers['authorization'];
+    if (!token) return res.status(403).json({ error: 'No token provided' });
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) return res.status(401).json({ error: 'Failed to authenticate token' });
+        req.userId = decoded.id;
+        next();
+    });
+};
+
+// Protected Route
+router.get('/profile', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).select('-password');
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching user data' });
+    }
+});
+
+module.exports = router;
+
+
+
+
+9. Set Up the Server:
+--------------------------
+Configure the server in server.js.
+
+
+JavaScript:
+------------
+
+
+const express = require('express');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/auth');
+const protectedRoutes = require('./routes/protected');
+require('dotenv').config();
+
+const app = express();
+connectDB();
+
+app.use(express.json()); // Middleware for parsing JSON
+app.use('/api/auth', authRoutes);
+app.use('/api/protected', protectedRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
+
+
+10. Run the Application:
+-------------------------
+Start the development server using nodemon:
+
+
+npx nodemon server.js
+
+
+--------------------------------------------------the end----------------------------------------------------------------------------------
+
+
